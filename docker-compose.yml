@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  docker-manager:
+    build: .
+    container_name: docker-manager
+    ports:
+      - "3000:3000"
+    volumes:
+      # Docker socket bağlantısı
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Windows için:
+      # - //./pipe/docker_engine://./pipe/docker_engine
+      # Log volume
+      - ./logs:/app/logs
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    restart: unless-stopped
+    depends_on:
+      - redis
+    networks:
+      - docker-manager-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: docker-manager-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - docker-manager-network
+
+  # Optional: Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: docker-manager-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/ssl/certs:ro
+    depends_on:
+      - docker-manager
+    restart: unless-stopped
+    networks:
+      - docker-manager-network
+
+volumes:
+  redis-data:
+
+networks:
+  docker-manager-network:
+    driver: bridge

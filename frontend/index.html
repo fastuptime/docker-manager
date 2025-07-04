@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker Manager - Modern Container Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        'primary': {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        'dark': {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        },
+                        'glass': 'rgba(255, 255, 255, 0.08)',
+                        'glass-light': 'rgba(255, 255, 255, 0.12)',
+                        'glass-dark': 'rgba(15, 23, 42, 0.1)',
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.6s ease-out',
+                        'slide-up': 'slideUp 0.4s ease-out',
+                        'slide-down': 'slideDown 0.4s ease-out',
+                        'slide-left': 'slideLeft 0.4s ease-out',
+                        'slide-right': 'slideRight 0.4s ease-out',
+                        'scale-in': 'scaleIn 0.3s ease-out',
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 3s ease-in-out infinite',
+                        'bounce-in': 'bounceIn 0.6s ease-out',
+                        'wiggle': 'wiggle 1s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideDown: {
+                            '0%': { opacity: '0', transform: 'translateY(-30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideLeft: {
+                            '0%': { opacity: '0', transform: 'translateX(30px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' },
+                        },
+                        slideRight: {
+                            '0%': { opacity: '0', transform: 'translateX(-30px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' },
+                        },
+                        scaleIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.8)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-8px)' },
+                        },
+                        bounceIn: {
+                            '0%': { transform: 'scale(0.3)', opacity: '0' },
+                            '50%': { transform: 'scale(1.05)' },
+                            '70%': { transform: 'scale(0.9)' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        },
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(-3deg)' },
+                            '50%': { transform: 'rotate(3deg)' },
+                        }
+                    },
+                    backdropBlur: {
+                        'xs': '2px',
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px rgba(31, 38, 135, 0.37)',
+                        'glass-inset': 'inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                        'glow': '0 0 20px rgba(59, 130, 246, 0.3)',
+                        'glow-lg': '0 0 40px rgba(59, 130, 246, 0.4)',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 font-sans min-h-screen overflow-x-hidden">
+    
+    
+    <div id="loading-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-primary-900 via-primary-800 to-primary-900">
+        <div class="text-center">
+            <div class="relative">
+                <div class="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto"></div>
+                <div class="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-primary-300 rounded-full animate-spin mx-auto" style="animation-delay: 0.2s;"></div>
+            </div>
+            <h2 class="mt-6 text-2xl font-bold text-white">Docker Manager</h2>
+            <p class="mt-2 text-primary-200">Yükleniyor...</p>
+        </div>
+    </div>
+
+    
+    <div id="mobile-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 hidden lg:hidden"></div>
+
+    
+    <div id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-white/80 backdrop-blur-xl border-r border-white/20 shadow-glass z-30 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+        <div class="flex flex-col h-full">
+            
+            <div class="p-6 border-b border-white/10">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <i class="fab fa-docker text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-dark-800">Docker Manager</h1>
+                        <p class="text-sm text-dark-500">Modern Container Management</p>
+                    </div>
+                </div>
+            </div>
+
+            
+            <nav class="flex-1 p-4 space-y-2">
+                <a href="#" onclick="showDashboard()" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-xl text-dark-700 hover:bg-white/60 hover:text-primary-600 transition-all duration-200 group">
+                    <i class="fas fa-home text-lg group-hover:scale-110 transition-transform"></i>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+                <a href="#" onclick="showContainers()" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-xl text-dark-700 hover:bg-white/60 hover:text-primary-600 transition-all duration-200 group">
+                    <i class="fas fa-cube text-lg group-hover:scale-110 transition-transform"></i>
+                    <span class="font-medium">Containers</span>
+                </a>
+                <a href="#" onclick="showImages()" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-xl text-dark-700 hover:bg-white/60 hover:text-primary-600 transition-all duration-200 group">
+                    <i class="fas fa-layer-group text-lg group-hover:scale-110 transition-transform"></i>
+                    <span class="font-medium">Images</span>
+                </a>
+                <a href="#" onclick="showNetworks()" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-xl text-dark-700 hover:bg-white/60 hover:text-primary-600 transition-all duration-200 group">
+                    <i class="fas fa-network-wired text-lg group-hover:scale-110 transition-transform"></i>
+                    <span class="font-medium">Networks</span>
+                </a>
+                <a href="#" onclick="showVolumes()" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-xl text-dark-700 hover:bg-white/60 hover:text-primary-600 transition-all duration-200 group">
+                    <i class="fas fa-hdd text-lg group-hover:scale-110 transition-transform"></i>
+                    <span class="font-medium">Volumes</span>
+                </a>
+                <a href="#" onclick="showLogs()" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-xl text-dark-700 hover:bg-white/60 hover:text-primary-600 transition-all duration-200 group">
+                    <i class="fas fa-file-alt text-lg group-hover:scale-110 transition-transform"></i>
+                    <span class="font-medium">Logs</span>
+                </a>
+                <a href="#" onclick="showMarket()" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-xl text-dark-700 hover:bg-white/60 hover:text-primary-600 transition-all duration-200 group">
+                    <i class="fas fa-store text-lg group-hover:scale-110 transition-transform"></i>
+                    <span class="font-medium">Uygulama Marketi</span>
+                </a>
+            </nav>
+
+            
+            <div class="p-4 border-t border-white/10">
+                <div class="flex items-center space-x-3 text-sm text-dark-500">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span>Connected</span>
+                    </div>
+                    <div class="text-xs">v1.0.0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="lg:ml-64">
+        
+        <header class="bg-white/80 backdrop-blur-xl border-b border-white/20 sticky top-0 z-20 shadow-sm">
+            <div class="px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button id="mobile-menu-toggle" class="lg:hidden p-2 rounded-xl hover:bg-white/60 transition-colors">
+                        <i class="fas fa-bars text-dark-700"></i>
+                    </button>
+                    <div>
+                        <h2 id="page-title" class="text-2xl font-bold text-dark-800">Dashboard</h2>
+                        <p id="page-subtitle" class="text-sm text-dark-500 mt-1">Docker ortamına genel bakış</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <button class="p-2 rounded-xl hover:bg-white/60 transition-colors relative">
+                            <i class="fas fa-bell text-dark-700"></i>
+                            <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+                        </button>
+                    </div>
+                    <button onclick="refreshData()" class="flex items-center space-x-2 px-4 py-2 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors shadow-lg hover:shadow-xl">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Yenile</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        
+        <main class="p-6">
+            
+            
+            <div id="dashboard-section" class="section">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-glass border border-white/20 hover:shadow-glow transition-all duration-300 group">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-dark-500 mb-1">Containers</p>
+                                <h3 class="text-2xl font-bold text-dark-800" id="containers-count">0</h3>
+                                <p class="text-xs text-green-600 mt-1">
+                                    <i class="fas fa-arrow-up"></i> 
+                                    <span id="running-containers">0</span> aktif
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                                <i class="fas fa-cube text-white text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-500 h-2 rounded-full transition-all duration-500" style="width: 0%" id="containers-progress"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-glass border border-white/20 hover:shadow-glow transition-all duration-300 group">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-dark-500 mb-1">Images</p>
+                                <h3 class="text-2xl font-bold text-dark-800" id="images-count">0</h3>
+                                <p class="text-xs text-blue-600 mt-1">
+                                    <i class="fas fa-database"></i> 
+                                    <span id="images-size">0 MB</span>
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                                <i class="fas fa-layer-group text-white text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-purple-500 h-2 rounded-full transition-all duration-500" style="width: 0%" id="images-progress"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-glass border border-white/20 hover:shadow-glow transition-all duration-300 group">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-dark-500 mb-1">Networks</p>
+                                <h3 class="text-2xl font-bold text-dark-800" id="networks-count">0</h3>
+                                <p class="text-xs text-orange-600 mt-1">
+                                    <i class="fas fa-network-wired"></i> 
+                                    <span id="networks-type">Custom</span>
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                                <i class="fas fa-network-wired text-white text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-orange-500 h-2 rounded-full transition-all duration-500" style="width: 0%" id="networks-progress"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-glass border border-white/20 hover:shadow-glow transition-all duration-300 group">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-dark-500 mb-1">Volumes</p>
+                                <h3 class="text-2xl font-bold text-dark-800" id="volumes-count">0</h3>
+                                <p class="text-xs text-teal-600 mt-1">
+                                    <i class="fas fa-hdd"></i> 
+                                    <span id="volumes-size">0 MB</span>
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                                <i class="fas fa-hdd text-white text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-teal-500 h-2 rounded-full transition-all duration-500" style="width: 0%" id="volumes-progress"></div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                    
+                    <div class="xl:col-span-2 bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-glass border border-white/20">
+                        <h3 class="text-lg font-semibold text-dark-800 mb-4 flex items-center">
+                            <i class="fas fa-server text-primary-500 mr-2"></i>
+                            Sistem Bilgileri
+                        </h3>
+                        <div class="grid grid-cols-2 gap-4" id="system-info">
+                            <div class="bg-gray-50/80 rounded-xl p-4">
+                                <div class="text-sm text-dark-500">Docker Version</div>
+                                <div class="text-lg font-semibold text-dark-800" id="docker-version">-</div>
+                            </div>
+                            <div class="bg-gray-50/80 rounded-xl p-4">
+                                <div class="text-sm text-dark-500">API Version</div>
+                                <div class="text-lg font-semibold text-dark-800" id="api-version">-</div>
+                            </div>
+                            <div class="bg-gray-50/80 rounded-xl p-4">
+                                <div class="text-sm text-dark-500">OS</div>
+                                <div class="text-lg font-semibold text-dark-800" id="os-info">-</div>
+                            </div>
+                            <div class="bg-gray-50/80 rounded-xl p-4">
+                                <div class="text-sm text-dark-500">Architecture</div>
+                                <div class="text-lg font-semibold text-dark-800" id="arch-info">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div class="bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-glass border border-white/20">
+                        <h3 class="text-lg font-semibold text-dark-800 mb-4 flex items-center">
+                            <i class="fas fa-bolt text-primary-500 mr-2"></i>
+                            Hızlı İşlemler
+                        </h3>
+                        <div class="space-y-3">
+                            <button onclick="createContainer()" class="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                <i class="fas fa-plus"></i>
+                                <span>Yeni Container</span>
+                            </button>
+                            <button onclick="pullImage()" class="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:from-purple-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                <i class="fas fa-download"></i>
+                                <span>Image Çek</span>
+                            </button>
+                            <button onclick="createNetwork()" class="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                <i class="fas fa-network-wired"></i>
+                                <span>Network Oluştur</span>
+                            </button>
+                            <button onclick="createVolume()" class="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                <i class="fas fa-hdd"></i>
+                                <span>Volume Oluştur</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="mt-6 bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-glass border border-white/20">
+                    <h3 class="text-lg font-semibold text-dark-800 mb-4 flex items-center">
+                        <i class="fas fa-history text-primary-500 mr-2"></i>
+                        Son Aktiviteler
+                    </h3>
+                    <div class="space-y-3" id="recent-activity">
+                        <div class="flex items-center justify-between p-3 bg-gray-50/80 rounded-xl">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-play text-green-600 text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-dark-800">Container başlatıldı</p>
+                                    <p class="text-xs text-dark-500">nginx:latest</p>
+                                </div>
+                            </div>
+                            <span class="text-xs text-dark-500">2 dakika önce</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50/80 rounded-xl">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-download text-blue-600 text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-dark-800">Image indirildi</p>
+                                    <p class="text-xs text-dark-500">postgres:13</p>
+                                </div>
+                            </div>
+                            <span class="text-xs text-dark-500">5 dakika önce</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50/80 rounded-xl">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-network-wired text-orange-600 text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-dark-800">Network oluşturuldu</p>
+                                    <p class="text-xs text-dark-500">app-network</p>
+                                </div>
+                            </div>
+                            <span class="text-xs text-dark-500">10 dakika önce</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div id="containers-section" class="section hidden">
+                <div class="bg-white/80 backdrop-blur-xl rounded-2xl shadow-glass border border-white/20 overflow-hidden">
+                    <div class="p-6 border-b border-white/20">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-dark-800">Container Yönetimi</h3>
+                            <button onclick="createContainer()" class="flex items-center space-x-2 px-4 py-2 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors shadow-lg hover:shadow-xl">
+                                <i class="fas fa-plus"></i>
+                                <span>Yeni Container</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50/80">
+                                <tr>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">Ad</th>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">Image</th>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">Durum</th>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">Portlar</th>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">Oluşturulma</th>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="containers-table" class="divide-y divide-white/20">
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div id="images-section" class="section hidden">
+                <div class="bg-white/80 backdrop-blur-xl rounded-2xl shadow-glass border border-white/20 overflow-hidden">
+                    <div class="p-6 border-b border-white/20">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-dark-800">Image Yönetimi</h3>
+                            <button onclick="pullImage()" class="flex items-center space-x-2 px-4 py-2 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors shadow-lg hover:shadow-xl">
+                                <i class="fas fa-download"></i>
+                                <span>Image Çek</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50/80">
+                                <tr>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">Repository</th>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">Tag</th>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">Image ID</th>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">Boyut</th>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">Oluşturulma</th>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="images-table" class="divide-y divide-white/20">
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div id="networks-section" class="section hidden">
+                <div class="bg-white/80 backdrop-blur-xl rounded-2xl shadow-glass border border-white/20 overflow-hidden">
+                    <div class="p-6 border-b border-white/20">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-dark-800">Network Yönetimi</h3>
+                            <button onclick="createNetwork()" class="flex items-center space-x-2 px-4 py-2 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors shadow-lg hover:shadow-xl">
+                                <i class="fas fa-plus"></i>
+                                <span>Network Oluştur</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50/80">
+                                <tr>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">Ad</th>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">Driver</th>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">Scope</th>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">Subnet</th>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">Oluşturulma</th>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="networks-table" class="divide-y divide-white/20">
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div id="volumes-section" class="section hidden">
+                <div class="bg-white/80 backdrop-blur-xl rounded-2xl shadow-glass border border-white/20 overflow-hidden">
+                    <div class="p-6 border-b border-white/20">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-dark-800">Volume Yönetimi</h3>
+                            <button onclick="createVolume()" class="flex items-center space-x-2 px-4 py-2 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors shadow-lg hover:shadow-xl">
+                                <i class="fas fa-plus"></i>
+                                <span>Volume Oluştur</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50/80">
+                                <tr>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">Ad</th>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">Driver</th>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">Mountpoint</th>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">Oluşturulma</th>
+                                    <th class="text-left p-4 text-sm font-medium text-dark-600">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="volumes-table" class="divide-y divide-white/20">
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div id="logs-section" class="section hidden">
+                <div class="bg-white/80 backdrop-blur-xl rounded-2xl shadow-glass border border-white/20 overflow-hidden">
+                    <div class="p-6 border-b border-white/20">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-dark-800">Container Logları</h3>
+                        </div>
+                        <div class="flex items-center space-x-2 mb-4">
+                            <input type="text" id="log-container-id" placeholder="Container ID veya adını girin" 
+                                   class="flex-1 px-3 py-2 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white/80 backdrop-blur-sm">
+                            <button onclick="followLogs(document.getElementById('log-container-id').value)" 
+                                    class="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors shadow-lg hover:shadow-xl">
+                                <i class="fas fa-play mr-2"></i>Canlı Takip
+                            </button>
+                            <button onclick="fetchLogs(document.getElementById('log-container-id').value)" 
+                                    class="px-4 py-2 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-colors shadow-lg hover:shadow-xl">
+                                <i class="fas fa-history mr-2"></i>Geçmiş Loglar
+                            </button>
+                            <button onclick="clearLogs()" 
+                                    class="px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors shadow-lg hover:shadow-xl">
+                                <i class="fas fa-trash mr-2"></i>Temizle
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div id="logs-container" class="bg-dark-900 text-green-400 p-4 rounded-xl h-96 overflow-y-auto font-mono text-sm">
+                            Container seçin ve log görüntüleme tipini belirleyin...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div id="market-section" class="section hidden">
+                <div class="bg-white/80 backdrop-blur-xl rounded-2xl shadow-glass border border-white/20 p-6">
+                    <h3 class="text-lg font-semibold text-dark-800 mb-4 flex items-center">
+                        <i class="fas fa-store text-primary-500 mr-2"></i>
+                        Uygulama Marketi
+                    </h3>
+                    <p class="text-sm text-dark-600 mb-6">Popüler uygulamaları tek tıkla kurun ve yapılandırın.</p>
+                    <div id="market-templates" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    
+    
+    <div id="container-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-white/90 backdrop-blur-xl rounded-2xl p-6 w-full max-w-md mx-4 shadow-glass border border-white/20 animate-scale-in">
+            <h3 class="text-lg font-semibold text-dark-800 mb-4">Yeni Container Oluştur</h3>
+            <form id="container-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-dark-700 mb-1">Container Adı</label>
+                    <input type="text" id="container-name" class="w-full px-3 py-2 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white/80 backdrop-blur-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-dark-700 mb-1">Image</label>
+                    <input type="text" id="container-image" class="w-full px-3 py-2 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white/80 backdrop-blur-sm" placeholder="nginx:latest">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-dark-700 mb-1">Portlar</label>
+                    <input type="text" id="container-ports" class="w-full px-3 py-2 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white/80 backdrop-blur-sm" placeholder="80:80">
+                </div>
+                <div class="flex justify-end space-x-2 pt-4">
+                    <button type="button" onclick="closeModal('container-modal')" class="px-4 py-2 text-dark-600 hover:text-dark-800 transition-colors">İptal</button>
+                    <button type="submit" class="px-4 py-2 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors shadow-lg hover:shadow-xl">Oluştur</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    
+    <div id="image-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-white/90 backdrop-blur-xl rounded-2xl p-6 w-full max-w-md mx-4 shadow-glass border border-white/20 animate-scale-in">
+            <h3 class="text-lg font-semibold text-dark-800 mb-4">Image Çek</h3>
+            <form id="image-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-dark-700 mb-1">Image Adı</label>
+                    <input type="text" id="image-name" class="w-full px-3 py-2 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white/80 backdrop-blur-sm" placeholder="nginx:latest">
+                </div>
+                <div class="flex justify-end space-x-2 pt-4">
+                    <button type="button" onclick="closeModal('image-modal')" class="px-4 py-2 text-dark-600 hover:text-dark-800 transition-colors">İptal</button>
+                    <button type="submit" class="px-4 py-2 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors shadow-lg hover:shadow-xl">Çek</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    
+    <div id="network-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-white/90 backdrop-blur-xl rounded-2xl p-6 w-full max-w-md mx-4 shadow-glass border border-white/20 animate-scale-in">
+            <h3 class="text-lg font-semibold text-dark-800 mb-4">Network Oluştur</h3>
+            <form id="network-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-dark-700 mb-1">Network Adı</label>
+                    <input type="text" id="network-name" class="w-full px-3 py-2 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white/80 backdrop-blur-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-dark-700 mb-1">Driver</label>
+                    <select id="network-driver" class="w-full px-3 py-2 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white/80 backdrop-blur-sm">
+                        <option value="bridge">Bridge</option>
+                        <option value="host">Host</option>
+                        <option value="overlay">Overlay</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-2 pt-4">
+                    <button type="button" onclick="closeModal('network-modal')" class="px-4 py-2 text-dark-600 hover:text-dark-800 transition-colors">İptal</button>
+                    <button type="submit" class="px-4 py-2 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors shadow-lg hover:shadow-xl">Oluştur</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    
+    <div id="volume-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-white/90 backdrop-blur-xl rounded-2xl p-6 w-full max-w-md mx-4 shadow-glass border border-white/20 animate-scale-in">
+            <h3 class="text-lg font-semibold text-dark-800 mb-4">Volume Oluştur</h3>
+            <form id="volume-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-dark-700 mb-1">Volume Adı</label>
+                    <input type="text" id="volume-name" class="w-full px-3 py-2 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white/80 backdrop-blur-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-dark-700 mb-1">Driver</label>
+                    <select id="volume-driver" class="w-full px-3 py-2 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white/80 backdrop-blur-sm">
+                        <option value="local">Local</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-2 pt-4">
+                    <button type="button" onclick="closeModal('volume-modal')" class="px-4 py-2 text-dark-600 hover:text-dark-800 transition-colors">İptal</button>
+                    <button type="submit" class="px-4 py-2 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors shadow-lg hover:shadow-xl">Oluştur</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    
+    <div id="notifications" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/market.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                document.getElementById('loading-screen').style.display = 'none';
+            }, 1500);
+        });
+
+        document.getElementById('mobile-menu-toggle').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        });
+
+        document.getElementById('mobile-overlay').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+        });
+
+        if (typeof initializeApp === 'function') {
+            initializeApp();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "name": "docker-manager",
+  "version": "1.0.0",
+  "description": "Kapsamlı Docker yönetim uygulaması",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "docker:build": "docker build -t docker-manager .",
+    "docker:run": "docker run -p 3000:3000 -v /var/run/docker.sock:/var/run/docker.sock docker-manager",
+    "docker:compose": "docker-compose up -d",
+    "docker:down": "docker-compose down"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "dockerode": "^4.0.0",
+    "socket.io": "^4.7.2",
+    "cors": "^2.8.5",
+    "morgan": "^1.10.0",
+    "helmet": "^7.0.0",
+    "winston": "^3.10.0",
+    "express-rate-limit": "^6.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "docker",
+    "management",
+    "nodejs",
+    "express",
+    "websocket"
+  ],
+  "author": "Docker Manager",
+  "license": "MIT"
+}
